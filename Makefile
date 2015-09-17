@@ -10,10 +10,8 @@ parallel:
 	gcc src/*.c -o bin/dot-product -std=gnu99 -g -Wall -pedantic -lrt -lm -Ofast -fno-unsafe-math-optimizations -march=core-avx-i -fopenmp
 
 run:
-	./bin/dot-product > res/pre-gcc
-	./bin/dot-product-icc > res/pre-icc
-	./bin/dot-product-unsafe > res/pre-gcc-unsafe
-	./bin/dot-product-unsafe-icc > res/pre-icc-unsafe
+	./bin/dot-product | tee res/gcc
+	./bin/dot-product-icc | tee res/icc
 
 clean:
 	rm -r bin

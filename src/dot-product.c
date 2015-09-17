@@ -8,6 +8,9 @@
 
 // Test parameters:
 
+// Comment out to disable testing of hugetlb/2MB pages. Need to already have these allocated by OS.
+#define TESTHUGETLB 1
+
 // Size of arrays used for testing. L3 caches are typically 6-8MiB, so
 // choose, say, 25x this. The tests use double-prec floating point,
 // (8B each).
@@ -59,7 +62,7 @@ double ComputeStdev(double * array, int arraySize);
 double ComputeMax(double * array, int arraySize);
 
 // Sets array[i] = i;
-void InitializeArray(double * array, int arraySize);
+void InitializeArray(double * array, const int arraySize);
 
 // Run different tests using function pointers. Argument "arg" not
 // used by all routines, used for eg, for prefetch distance.
@@ -120,49 +123,165 @@ int main(void)
 	RunTestSum(&Sum4u2, ARRAYSIZE, NTIMES, "Sum4u2", 0);
 	RunTestSum(&Sum4u4, ARRAYSIZE, NTIMES, "Sum4u4", 0);
 	printf("\n");
+	RunTestSum(&Sum52, ARRAYSIZE, NTIMES, "Sum52", 0);
+	RunTestSum(&Sum54, ARRAYSIZE, NTIMES, "Sum54", 0);
+	RunTestSum(&Sum58, ARRAYSIZE, NTIMES, "Sum58", 0);
+	RunTestSum(&Sum516, ARRAYSIZE, NTIMES, "Sum516", 0);
+	printf("\n");
+	printf("\n");
 
-#ifdef SWPREFETCH
-	// experimentally determined near-optimal prefetch distance of 25 cache lines
-	RunTestSum(&Sum1, ARRAYSIZE, NTIMES, "Sum1", 25*8);
-	printf("\n");
-	RunTestSum(&Sum2p2, ARRAYSIZE, NTIMES, "Sum2p2", 25*8);
-	RunTestSum(&Sum2p4, ARRAYSIZE, NTIMES, "Sum2p4", 25*8);
-	RunTestSum(&Sum2p8, ARRAYSIZE, NTIMES, "Sum2p8", 25*8);
-	RunTestSum(&Sum2p16, ARRAYSIZE, NTIMES, "Sum2p16", 25*8);
-	printf("\n");
-	RunTestSum(&Sum3u1, ARRAYSIZE, NTIMES, "Sum3u1", 25*8);
-	RunTestSum(&Sum3u2, ARRAYSIZE, NTIMES, "Sum3u2", 25*8);
-	RunTestSum(&Sum3u4, ARRAYSIZE, NTIMES, "Sum3u4", 25*8);
-	printf("\n");
-	RunTestSum(&Sum4u1, ARRAYSIZE, NTIMES, "Sum4u1", 25*8);
-	RunTestSum(&Sum4u2, ARRAYSIZE, NTIMES, "Sum4u2", 25*8);
-	RunTestSum(&Sum4u4, ARRAYSIZE, NTIMES, "Sum4u4", 25*8);
 
-	// Loop over prefetch distances, to determine best distance for each routine
-/*	for (int dist = 0; dist < 128; dist++) {sprintf(name, "Sum1 %4d ", dist); RunTestSum(&Sum1, ARRAYSIZE, NTIMES, name, dist*8);}
+#ifdef TESTHUGETLB
+	// Run Sum test without prefetch, with hugetlb
+	RunTestSum(&Sum1, ARRAYSIZE, NTIMES, "LP Sum1", 0);
 	printf("\n");
-	for (int dist = 0; dist < 128; dist++) {sprintf(name, "Sum2p2 %4d ", dist); RunTestSum(&Sum2p2, ARRAYSIZE, NTIMES, name, dist*8);}
+	RunTestSumLP(&Sum2p2, ARRAYSIZE, NTIMES, "LP Sum2p2", 0);
+	RunTestSumLP(&Sum2p4, ARRAYSIZE, NTIMES, "LP Sum2p4", 0);
+	RunTestSumLP(&Sum2p8, ARRAYSIZE, NTIMES, "LP Sum2p8", 0);
+	RunTestSumLP(&Sum2p16, ARRAYSIZE, NTIMES, "LP Sum2p16", 0);
 	printf("\n");
-	for (int dist = 0; dist < 128; dist++) {sprintf(name, "Sum2p4 %4d ", dist); RunTestSum(&Sum2p4, ARRAYSIZE, NTIMES, name, dist*8);}
+	RunTestSumLP(&Sum3u1, ARRAYSIZE, NTIMES, "LP Sum3u1", 0);
+	RunTestSumLP(&Sum3u2, ARRAYSIZE, NTIMES, "LP Sum3u2", 0);
+	RunTestSumLP(&Sum3u4, ARRAYSIZE, NTIMES, "LP Sum3u4", 0);
 	printf("\n");
-	for (int dist = 0; dist < 128; dist++) {sprintf(name, "Sum2p8 %4d ", dist); RunTestSum(&Sum2p8, ARRAYSIZE, NTIMES, name, dist*8);}
+	RunTestSumLP(&Sum4u1, ARRAYSIZE, NTIMES, "LP Sum4u1", 0);
+	RunTestSumLP(&Sum4u2, ARRAYSIZE, NTIMES, "LP Sum4u2", 0);
+	RunTestSumLP(&Sum4u4, ARRAYSIZE, NTIMES, "LP Sum4u4", 0);
 	printf("\n");
-	for (int dist = 0; dist < 128; dist++) {sprintf(name, "Sum2p16 %4d ", dist); RunTestSum(&Sum2p16, ARRAYSIZE, NTIMES, name, dist*8);}
+	RunTestSumLP(&Sum52, ARRAYSIZE, NTIMES, "LP Sum52", 0);
+	RunTestSumLP(&Sum54, ARRAYSIZE, NTIMES, "LP Sum54", 0);
+	RunTestSumLP(&Sum58, ARRAYSIZE, NTIMES, "LP Sum58", 0);
+	RunTestSumLP(&Sum516, ARRAYSIZE, NTIMES, "LP Sum516", 0);
 	printf("\n");
-	for (int dist = 0; dist < 128; dist++) {sprintf(name, "Sum3u1 %4d ", dist); RunTestSum(&Sum3u1, ARRAYSIZE, NTIMES, name, dist*8);}
 	printf("\n");
-	for (int dist = 0; dist < 128; dist++) {sprintf(name, "Sum3u2 %4d ", dist); RunTestSum(&Sum3u2, ARRAYSIZE, NTIMES, name, dist*8);}
-	printf("\n");
-	for (int dist = 0; dist < 128; dist++) {sprintf(name, "Sum3u4 %4d ", dist); RunTestSum(&Sum3u4, ARRAYSIZE, NTIMES, name, dist*8);}
-	printf("\n");
-	for (int dist = 0; dist < 128; dist++) {sprintf(name, "Sum4u1 %4d ", dist); RunTestSum(&Sum4u1, ARRAYSIZE, NTIMES, name, dist*8);}
-	printf("\n");
-	for (int dist = 0; dist < 128; dist++) {sprintf(name, "Sum4u2 %4d ", dist); RunTestSum(&Sum4u2, ARRAYSIZE, NTIMES, name, dist*8);}
-	printf("\n");
-	for (int dist = 0; dist < 128; dist++) {sprintf(name, "Sum4u4 %4d ", dist); RunTestSum(&Sum4u4, ARRAYSIZE, NTIMES, name, dist*8);}*/
 #endif
 
 
+
+// Run with HAND-TUNED optimal prefetch distances for each routine. (desktop values)
+#ifdef SWPREFETCH
+/*
+	// Run Sum test with prefetch
+	RunTestSum(&Sum1, ARRAYSIZE, NTIMES, "Sum1", 20*8);
+	printf("\n");
+	RunTestSum(&Sum2p2, ARRAYSIZE, NTIMES, "Sum2p2", 20*8);
+	RunTestSum(&Sum2p4, ARRAYSIZE, NTIMES, "Sum2p4", 20*8);
+	RunTestSum(&Sum2p8, ARRAYSIZE, NTIMES, "Sum2p8", 20*8);
+	RunTestSum(&Sum2p16, ARRAYSIZE, NTIMES, "Sum2p16", 20*8);
+	printf("\n");
+	RunTestSum(&Sum3u1, ARRAYSIZE, NTIMES, "Sum3u1", 14*8);
+	RunTestSum(&Sum3u2, ARRAYSIZE, NTIMES, "Sum3u2", 26*8);
+	RunTestSum(&Sum3u4, ARRAYSIZE, NTIMES, "Sum3u4", 14*8);
+	printf("\n");
+	RunTestSum(&Sum4u1, ARRAYSIZE, NTIMES, "Sum4u1", 23*8);
+	RunTestSum(&Sum4u2, ARRAYSIZE, NTIMES, "Sum4u2", 26*8);
+	RunTestSum(&Sum4u4, ARRAYSIZE, NTIMES, "Sum4u4", 25*8);
+	printf("\n");
+	RunTestSum(&Sum52, ARRAYSIZE, NTIMES, "Sum52", 4*8);
+	RunTestSum(&Sum54, ARRAYSIZE, NTIMES, "Sum54", 4*8);
+	RunTestSum(&Sum58, ARRAYSIZE, NTIMES, "Sum58", 6*8);
+	RunTestSum(&Sum516, ARRAYSIZE, NTIMES, "Sum516", 4*8);
+	printf("\n");
+	printf("\n");
+*/
+
+#ifdef TESTHUGETLB
+/*
+	// Run Sum test with prefetch, with hugetlb
+	RunTestSum(&Sum1, ARRAYSIZE, NTIMES, "LP Sum1", 20*8);
+	printf("\n");
+	RunTestSumLP(&Sum2p2, ARRAYSIZE, NTIMES, "LP Sum2p2", 20*8);
+	RunTestSumLP(&Sum2p4, ARRAYSIZE, NTIMES, "LP Sum2p4", 20*8);
+	RunTestSumLP(&Sum2p8, ARRAYSIZE, NTIMES, "LP Sum2p8", 20*8);
+	RunTestSumLP(&Sum2p16, ARRAYSIZE, NTIMES, "LP Sum2p16", 20*8);
+	printf("\n");
+	RunTestSumLP(&Sum3u1, ARRAYSIZE, NTIMES, "LP Sum3u1", 14*8);
+	RunTestSumLP(&Sum3u2, ARRAYSIZE, NTIMES, "LP Sum3u2", 26*8);
+	RunTestSumLP(&Sum3u4, ARRAYSIZE, NTIMES, "LP Sum3u4", 14*8);
+	printf("\n");
+	RunTestSumLP(&Sum4u1, ARRAYSIZE, NTIMES, "LP Sum4u1", 22*8);
+	RunTestSumLP(&Sum4u2, ARRAYSIZE, NTIMES, "LP Sum4u2", 28*8);
+	RunTestSumLP(&Sum4u4, ARRAYSIZE, NTIMES, "LP Sum4u4", 25*8);
+	printf("\n");
+	RunTestSumLP(&Sum52, ARRAYSIZE, NTIMES, "LP Sum52", 5*8);
+	RunTestSumLP(&Sum54, ARRAYSIZE, NTIMES, "LP Sum54", 5*8);
+	RunTestSumLP(&Sum58, ARRAYSIZE, NTIMES, "LP Sum58", 7*8);
+	RunTestSumLP(&Sum516, ARRAYSIZE, NTIMES, "LP Sum516", 4*8);
+	printf("\n");
+	printf("\n");
+*/
+#endif
+#endif
+
+
+/*
+#ifdef SWPREFETCH
+	// Loop over prefetch distances, to determine best distance for each routine
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "Sum1 %4d ", dist); RunTestSum(&Sum1, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "Sum2p2 %4d ", dist); RunTestSum(&Sum2p2, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "Sum2p4 %4d ", dist); RunTestSum(&Sum2p4, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "Sum2p8 %4d ", dist); RunTestSum(&Sum2p8, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "Sum2p16 %4d ", dist); RunTestSum(&Sum2p16, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "Sum3u1 %4d ", dist); RunTestSum(&Sum3u1, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "Sum3u2 %4d ", dist); RunTestSum(&Sum3u2, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "Sum3u4 %4d ", dist); RunTestSum(&Sum3u4, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "Sum4u1 %4d ", dist); RunTestSum(&Sum4u1, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "Sum4u2 %4d ", dist); RunTestSum(&Sum4u2, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "Sum4u4 %4d ", dist); RunTestSum(&Sum4u4, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "Sum52 %4d ", dist); RunTestSum(&Sum52, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "Sum54 %4d ", dist); RunTestSum(&Sum54, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "Sum58 %4d ", dist); RunTestSum(&Sum58, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "Sum516 %4d ", dist); RunTestSum(&Sum516, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+
+#ifdef TESTHUGETLB
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "LPSum1 %4d ", dist); RunTestSumLP(&Sum1, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "LPSum2p2 %4d ", dist); RunTestSumLP(&Sum2p2, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "LPSum2p4 %4d ", dist); RunTestSumLP(&Sum2p4, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "LPSum2p8 %4d ", dist); RunTestSumLP(&Sum2p8, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "LPSum2p16 %4d ", dist); RunTestSumLP(&Sum2p16, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "LPSum3u1 %4d ", dist); RunTestSumLP(&Sum3u1, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "LPSum3u2 %4d ", dist); RunTestSumLP(&Sum3u2, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "LPSum3u4 %4d ", dist); RunTestSumLP(&Sum3u4, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "LPSum4u1 %4d ", dist); RunTestSumLP(&Sum4u1, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "LPSum4u2 %4d ", dist); RunTestSumLP(&Sum4u2, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "LPSum4u4 %4d ", dist); RunTestSumLP(&Sum4u4, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "LPSum52 %4d ", dist); RunTestSumLP(&Sum52, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "LPSum54 %4d ", dist); RunTestSumLP(&Sum54, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "LPSum58 %4d ", dist); RunTestSumLP(&Sum58, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+	for (int dist = 0; dist < 64; dist++) {sprintf(name, "LPSum516 %4d ", dist); RunTestSumLP(&Sum516, ARRAYSIZE, NTIMES, name, dist*8);}
+	printf("\n");
+#endif
+#endif
+*/
 
 
 	return 0;
@@ -405,7 +524,7 @@ void RunTestSumLP(SumPtr Sum, CONST int arraySize,
 
 
 
-void InitializeArray(double * array, int arraySize)
+void InitializeArray(double * array, const int arraySize)
 {
 	// Initialize in parallel (if we are using openmp). This puts the allocation
 	// in the correct NUMA node on NUMA systems.
