@@ -14,6 +14,8 @@ Begin by considering the simpler case of summing the elements of a single large 
 
 ![desktop](img/desktop.png)
 
+![laptop](img/laptop.png)
+
 
 
 #### Simple
@@ -69,3 +71,8 @@ The reason that accessing *4* pages seems to improve performance is that we have
 To try and further saturate the memory controller we can insert software prefetch instructions into the loops. When the loop reaches the prefetched location, it will find the data in L1 cache and not have to request it from DRAM.
 
 WE WERE ALREADY LOADING FROM DRAM EVERY CYCLE, BY HIDING THE ADDITION LATENCY AS MUCH AS POSSIBLE. WHY SHOULD PREFETCHING HELP?
+
+
+
+#### Huge Pages
+
