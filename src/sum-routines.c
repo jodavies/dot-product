@@ -198,7 +198,7 @@ double Sum2p16(CONST double * RESTRICT array,
 }
 
 
-
+#ifdef WITHSSE
 // Explicit vectorization, to produce tighter code. Use SSE here.
 double Sum3u1(CONST double * RESTRICT array,
             CONST int arraySize,
@@ -329,9 +329,10 @@ double Sum3u4(CONST double * RESTRICT array,
            + ((double*)&sum3)[0] + ((double*)&sum3)[1]
     ;
 }
+#endif
 
 
-
+#ifdef WITHAVX
 // Explicit vectorization, to produce tighter code. Use AVX here.
 double Sum4u1(CONST double * RESTRICT array,
             CONST int arraySize,
@@ -469,10 +470,713 @@ double Sum4u4(CONST double * RESTRICT array,
            + ((double*)&sum3)[0] + ((double*)&sum3)[1] + ((double*)&sum3)[2] + ((double*)&sum3)[3]
     ;
 }
+#endif
 
 
-
+#ifdef WITHSSE
+// access multiple physical memory pages in parallel
 double Sum52(CONST double * RESTRICT array,
+            CONST int arraySize,
+            CONST int prefetchDistance)
+{
+
+
+	__m128d sum0 = _mm_set1_pd(0.0);
+	__m128d sum1 = _mm_set1_pd(0.0);
+	__m128d sum2 = _mm_set1_pd(0.0);
+	__m128d sum3 = _mm_set1_pd(0.0);
+	__m128d a0, a1, a2, a3;
+
+	#pragma omp parallel for default(none) shared(array) private(a0,a1,a2,a3) reduction(+:sum0,sum1,sum2,sum3) schedule(static)
+	for (int j = 0; j < arraySize; j+=2*MEMPAGESIZE) {
+		for (int i = j; i < j+MEMPAGESIZE; i+= 16) {
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+0*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+0*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+1*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+1*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+		}
+	}
+
+	return   ((double*)&sum0)[0] + ((double*)&sum0)[1]
+           + ((double*)&sum1)[0] + ((double*)&sum1)[1]
+           + ((double*)&sum2)[0] + ((double*)&sum2)[1]
+           + ((double*)&sum3)[0] + ((double*)&sum3)[1]
+    ;
+}
+double Sum54(CONST double * RESTRICT array,
+            CONST int arraySize,
+            CONST int prefetchDistance)
+{
+
+
+	__m128d sum0 = _mm_set1_pd(0.0);
+	__m128d sum1 = _mm_set1_pd(0.0);
+	__m128d sum2 = _mm_set1_pd(0.0);
+	__m128d sum3 = _mm_set1_pd(0.0);
+	__m128d a0, a1, a2, a3;
+
+	#pragma omp parallel for default(none) shared(array) private(a0,a1,a2,a3) reduction(+:sum0,sum1,sum2,sum3) schedule(static)
+	for (int j = 0; j < arraySize; j+=4*MEMPAGESIZE) {
+		for (int i = j; i < j+MEMPAGESIZE; i+= 16) {
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+0*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+0*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+1*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+1*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+2*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+2*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+2*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+2*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+2*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+2*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+2*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+2*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+2*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+2*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+3*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+3*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+3*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+3*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+3*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+3*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+3*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+3*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+3*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+3*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+		}
+	}
+
+	return   ((double*)&sum0)[0] + ((double*)&sum0)[1]
+           + ((double*)&sum1)[0] + ((double*)&sum1)[1]
+           + ((double*)&sum2)[0] + ((double*)&sum2)[1]
+           + ((double*)&sum3)[0] + ((double*)&sum3)[1]
+    ;
+}
+double Sum58(CONST double * RESTRICT array,
+            CONST int arraySize,
+            CONST int prefetchDistance)
+{
+
+
+	__m128d sum0 = _mm_set1_pd(0.0);
+	__m128d sum1 = _mm_set1_pd(0.0);
+	__m128d sum2 = _mm_set1_pd(0.0);
+	__m128d sum3 = _mm_set1_pd(0.0);
+	__m128d a0, a1, a2, a3;
+
+	#pragma omp parallel for default(none) shared(array) private(a0,a1,a2,a3) reduction(+:sum0,sum1,sum2,sum3) schedule(static)
+	for (int j = 0; j < arraySize; j+=8*MEMPAGESIZE) {
+		for (int i = j; i < j+MEMPAGESIZE; i+= 16) {
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+0*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+0*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+1*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+1*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+2*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+2*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+2*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+2*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+2*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+2*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+2*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+2*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+2*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+2*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+3*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+3*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+3*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+3*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+3*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+3*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+3*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+3*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+3*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+3*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+4*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+4*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+4*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+4*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+4*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+4*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+4*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+4*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+4*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+4*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+5*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+5*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+5*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+5*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+5*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+5*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+5*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+5*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+5*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+5*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+6*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+6*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+6*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+6*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+6*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+6*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+6*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+6*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+6*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+6*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+7*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+7*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+7*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+7*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+7*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+7*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+7*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+7*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+7*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+7*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+		}
+	}
+
+	return   ((double*)&sum0)[0] + ((double*)&sum0)[1]
+           + ((double*)&sum1)[0] + ((double*)&sum1)[1]
+           + ((double*)&sum2)[0] + ((double*)&sum2)[1]
+           + ((double*)&sum3)[0] + ((double*)&sum3)[1]
+    ;
+}
+double Sum516(CONST double * RESTRICT array,
+            CONST int arraySize,
+            CONST int prefetchDistance)
+{
+
+
+	__m128d sum0 = _mm_set1_pd(0.0);
+	__m128d sum1 = _mm_set1_pd(0.0);
+	__m128d sum2 = _mm_set1_pd(0.0);
+	__m128d sum3 = _mm_set1_pd(0.0);
+	__m128d a0, a1, a2, a3;
+
+	#pragma omp parallel for default(none) shared(array) private(a0,a1,a2,a3) reduction(+:sum0,sum1,sum2,sum3) schedule(static)
+	for (int j = 0; j < arraySize; j+=16*MEMPAGESIZE) {
+		for (int i = j; i < j+MEMPAGESIZE; i+= 16) {
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+0*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+0*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+1*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+1*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+2*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+2*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+2*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+2*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+2*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+2*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+2*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+2*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+2*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+2*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+3*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+3*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+3*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+3*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+3*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+3*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+3*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+3*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+3*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+3*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+4*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+4*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+4*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+4*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+4*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+4*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+4*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+4*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+4*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+4*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+5*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+5*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+5*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+5*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+5*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+5*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+5*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+5*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+5*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+5*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+6*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+6*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+6*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+6*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+6*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+6*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+6*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+6*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+6*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+6*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+7*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+7*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+7*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+7*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+7*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+7*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+7*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+7*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+7*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+7*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+8*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+8*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+8*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+8*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+8*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+8*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+8*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+8*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+8*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+8*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+9*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+9*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+9*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+9*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+9*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+9*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+9*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+9*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+9*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+9*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+10*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+10*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+10*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+10*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+10*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+10*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+10*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+10*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+10*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+10*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+11*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+11*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+11*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+11*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+11*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+11*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+11*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+11*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+11*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+11*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+12*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+12*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+12*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+12*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+12*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+12*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+12*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+12*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+12*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+12*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+13*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+13*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+13*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+13*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+13*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+13*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+13*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+13*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+13*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+13*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+14*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+14*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+14*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+14*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+14*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+14*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+14*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+14*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+14*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+14*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+#ifdef SWPREFETCH
+			_mm_prefetch(&(array[i+15*MEMPAGESIZE+prefetchDistance+0]), _MM_HINT_T0);
+			_mm_prefetch(&(array[i+15*MEMPAGESIZE+prefetchDistance+8]), _MM_HINT_T0);
+#endif
+			a0 = _mm_load_pd(&array[i+15*MEMPAGESIZE+0]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+15*MEMPAGESIZE+2]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+15*MEMPAGESIZE+4]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+15*MEMPAGESIZE+6]);
+			sum3 = _mm_add_pd(sum3, a3);
+			a0 = _mm_load_pd(&array[i+15*MEMPAGESIZE+8]);
+			sum0 = _mm_add_pd(sum0, a0);
+			a1 = _mm_load_pd(&array[i+15*MEMPAGESIZE+10]);
+			sum1 = _mm_add_pd(sum1, a1);
+			a2 = _mm_load_pd(&array[i+15*MEMPAGESIZE+12]);
+			sum2 = _mm_add_pd(sum2, a2);
+			a3 = _mm_load_pd(&array[i+15*MEMPAGESIZE+14]);
+			sum3 = _mm_add_pd(sum3, a3);
+		}
+	}
+
+	return   ((double*)&sum0)[0] + ((double*)&sum0)[1]
+           + ((double*)&sum1)[0] + ((double*)&sum1)[1]
+           + ((double*)&sum2)[0] + ((double*)&sum2)[1]
+           + ((double*)&sum3)[0] + ((double*)&sum3)[1]
+    ;
+}
+#endif
+
+
+#ifdef WITHAVX
+// access multiple physical memory pages in parallel
+double Sum62(CONST double * RESTRICT array,
             CONST int arraySize,
             CONST int prefetchDistance)
 {
@@ -520,7 +1224,7 @@ double Sum52(CONST double * RESTRICT array,
            + ((double*)&sum3)[0] + ((double*)&sum3)[1] + ((double*)&sum3)[2] + ((double*)&sum3)[3]
     ;
 }
-double Sum54(CONST double * RESTRICT array,
+double Sum64(CONST double * RESTRICT array,
             CONST int arraySize,
             CONST int prefetchDistance)
 {
@@ -592,7 +1296,7 @@ double Sum54(CONST double * RESTRICT array,
            + ((double*)&sum3)[0] + ((double*)&sum3)[1] + ((double*)&sum3)[2] + ((double*)&sum3)[3]
     ;
 }
-double Sum58(CONST double * RESTRICT array,
+double Sum68(CONST double * RESTRICT array,
             CONST int arraySize,
             CONST int prefetchDistance)
 {
@@ -712,7 +1416,7 @@ double Sum58(CONST double * RESTRICT array,
            + ((double*)&sum3)[0] + ((double*)&sum3)[1] + ((double*)&sum3)[2] + ((double*)&sum3)[3]
     ;
 }
-double Sum516(CONST double * RESTRICT array,
+double Sum616(CONST double * RESTRICT array,
             CONST int arraySize,
             CONST int prefetchDistance)
 {
@@ -928,4 +1632,5 @@ double Sum516(CONST double * RESTRICT array,
            + ((double*)&sum3)[0] + ((double*)&sum3)[1] + ((double*)&sum3)[2] + ((double*)&sum3)[3]
     ;
 }
+#endif
 

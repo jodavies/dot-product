@@ -12,9 +12,15 @@ In all cases, we use the highest possible optimization level of the compiler (`-
 ## Array Sum
 Begin by considering the simpler case of summing the elements of a single large array. Results for `gcc` are as graphed (`icc` produces very similar performance), with some explanation of each test below.
 
-![desktop](img/desktop.png)
+Sandy Bridge:
 
-![laptop](img/laptop.png)
+![Sandy Brdige](img/sandybridge.png)
+
+
+Ivy Bridge:
+
+![Ivy Bridge](img/ivybridge.png)
+![Ivy Bridge](img/ivybridge2.png)
 
 
 
@@ -70,9 +76,44 @@ The reason that accessing *4* pages seems to improve performance is that we have
 #### Software Prefetching
 To try and further saturate the memory controller we can insert software prefetch instructions into the loops. When the loop reaches the prefetched location, it will find the data in L1 cache and not have to request it from DRAM.
 
-WE WERE ALREADY LOADING FROM DRAM EVERY CYCLE, BY HIDING THE ADDITION LATENCY AS MUCH AS POSSIBLE. WHY SHOULD PREFETCHING HELP?
+The optimizations were designed to hide the addition latency as much as possible, and make memory requests every cycle. The CPU is occasionally interrupted by other threads, however, so adding software prefetches means we have more outstanding memory requests that can fill these gaps. ???????????
 
 
 
 #### Huge Pages
+If we allocate memory with mmap, and request HUGE_TLB, the OS will give us huge (2MB) pages (these must already have been allocated). Linux's memory pages are stored contiguously in physical memory, but the pages themselves are not necessarily contiguous.
+
+By using 2MB OS pages, the concurrent access of multiple physical memory pages can be more properly realised. The contiguous 2MB chunk of memory is shared, in 8KB physical memory pages, around the ranks and channels of the DIMMs. Accessing the 8KB physical pages in parallel is now more likely to access ranks in parallel as intended.
+
+As the chart shows, this makes a negligible difference in most tests, but in the final tests, in which we read from 4 or 8 pages in parallel, it helps significantly.
+
+
+
+#### Effects of memory frequency and CAS latency
+The cas latency determines how long we must wait (in memory cycles) to retrieve data from an *open page*, that is, a page in the sense amps. Since we are in principle reading full open pages per rank, this should make the biggest difference of the different memory latencies.
+
+In fact, this difference is very small. The table shows the % of theoretical peak bandwidth (12.5, 16.66, 20.83 GB/s for DDR3-800, DDR3-1066, DDR3-1333 respectively) achieved by the AVX 8 Pages test, for different frequencies and CAS latencies:
+
+CAS Latency | DDR3-800 | DDR3-1066 | DDR3-1333
+-----------:|---------:|----------:|---------:
+5           | 90.42		
+6			| 90.39		
+7			| 90.06|89.60
+8			| 89.68|89.20|86.88
+9			| 89.22|88.52|86.58
+10          | 88.78|88.27|86.11
+
+
+#### Effects of CPU frequency
+In the charts, we see a large difference between the % of peak theoretical bandwidth achieved by the DDR3-1333-CL9 system and the DDR3-1600-CL11. How much of this is attributable to the large difference in CPU frequency? Although the computation part of the loop (the addition) should be a small fraction of the total time (the code is severely DRAM bandwidth constrained), the more highly clocked CPU will be getting through it more quickly, and therefore issuing memory read requests more often.
+
+We observe a small difference, but not large enough to explain the 
+
+% of Highest Freq (4.4) | % of Best Perf. | Bandwidth (GB/s)
+-----------------------:|----------------:|-----------------:
+77.27 (3.4)	            | 97.29           | 17.546=
+81.82 (3.6)             | 97.09           | 17.51
+90.91 (4.0)             | 98.78           | 17.815
+100.00 (4.4)            | 100.00          | 18.035
+
 
